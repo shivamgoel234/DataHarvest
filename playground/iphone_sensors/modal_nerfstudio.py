@@ -13,8 +13,8 @@ import modal
 ROOT = Path(__file__).resolve().parent
 DEFAULT_DATASET = ROOT / "outputs" / "nerfstudio" / "iphone-data-1"
 
-APP_NAME = "hack48-iphone-nerfstudio"
-VOLUME_NAME = "hack48-iphone-nerfstudio"
+APP_NAME = "dataharvest-iphone-nerfstudio"
+VOLUME_NAME = "dataharvest-iphone-nerfstudio"
 VOLUME_ROOT = Path("/workspace")
 DATASETS_ROOT = VOLUME_ROOT / "datasets"
 RUNS_ROOT = VOLUME_ROOT / "runs"
@@ -364,3 +364,4 @@ def main(
     print(f"  {splat_target}", flush=True)
     print(f"  {camera_path_target}", flush=True)
     print(f"Open http://127.0.0.1:5177/?dataset={name}", flush=True)
+

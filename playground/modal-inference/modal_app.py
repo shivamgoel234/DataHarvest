@@ -18,8 +18,8 @@ from modal_inference.media import (
 from modal_inference.ultralytics_results import result_to_record
 
 
-APP_NAME = "hack48-modal-inference"
-MODEL_VOLUME_NAME = "hack48-modal-inference-models"
+APP_NAME = "dataharvest-modal-inference"
+MODEL_VOLUME_NAME = "dataharvest-modal-inference-models"
 MODEL_ROOT = "/models"
 
 THIS_DIR = Path(__file__).resolve().parent
@@ -383,7 +383,7 @@ class TemporalActionSegmenter:
             records = process_videos([input_path], config)
 
         return {
-            "engine": "hack48-temporal-action-segmentation",
+            "engine": "dataharvest-temporal-action-segmentation",
             "model": str(self.model_path),
             "segment_count": len(records),
             "segments": records,
@@ -453,3 +453,4 @@ def main(
         raise ValueError(f"Unsupported kind: {kind}")
 
     _upload_output(result, output_json)
+

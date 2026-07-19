@@ -40,7 +40,7 @@ SAM 3.1 needs Meta/Hugging Face checkpoint access. Upload the approved
 checkpoint to the shared model Volume before using `--kind sam`:
 
 ```bash
-uv run --python 3.12 modal volume put hack48-modal-inference-models \
+uv run --python 3.12 modal volume put dataharvest-modal-inference-models \
   /path/to/sam3.pt \
   /sam/sam3.pt
 ```
@@ -82,7 +82,7 @@ uv run --python 3.12 modal run modal_app.py \
 - MediaPipe and temporal segmentation run CPU-only.
 - `scaledown_window` is short and `min_containers` is left at the Modal default,
   so idle containers do not stay warm for long.
-- Models are cached in the `hack48-modal-inference-models` Volume instead of
+- Models are cached in the `dataharvest-modal-inference-models` Volume instead of
   redownloading on every cold start.
 - CLI examples use `--max-frames`; keep that during comparison runs, then remove
   or raise it for full videos.
@@ -101,3 +101,4 @@ secret with an approved Hugging Face token and wire it into the SAM image.
 
 The temporal action segmentation wrapper uses `labeler="none"` for inference.
 If you want VLM captions in Modal, we should add an OpenAI secret to that class.
+

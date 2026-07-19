@@ -44,7 +44,7 @@ uv run modal run modal_nerfstudio.py \
   --max-num-iterations 7000
 ```
 
-The Modal job uses a persistent volume named `hack48-iphone-nerfstudio`. It runs `ns-train splatfacto` remotely on an L4/A10 fallback GPU, runs `ns-export gaussian-splat`, converts the exported PLY to Spark-compatible SPZ on Modal, writes `camera_path.json` in the exported Nerfstudio coordinate frame, and downloads the browser-ready assets into `spark_viewer/public/`.
+The Modal job uses a persistent volume named `dataharvest-iphone-nerfstudio`. It runs `ns-train splatfacto` remotely on an L4/A10 fallback GPU, runs `ns-export gaussian-splat`, converts the exported PLY to Spark-compatible SPZ on Modal, writes `camera_path.json` in the exported Nerfstudio coordinate frame, and downloads the browser-ready assets into `spark_viewer/public/`.
 
 ## Spark SPZ Viewer
 
@@ -66,3 +66,4 @@ npm run dev -- --port 5177
 Open `http://127.0.0.1:5177/?dataset=iphone-data-3`. The viewer loads `public/splats/<dataset>.spz` with Spark's `SplatMesh`, starts at the first captured camera pose, overlays the captured camera trajectory from `public/camera-paths/<dataset>.json`, and can replay the original camera motion using the capture timestamps.
 
 Click `Start View` to jump to the first recorded camera pose and enter free-camera mode. In free-camera mode, use `W/A/S/D` to move, drag the mouse or use arrow keys to rotate, `Space`/`E` and `Ctrl`/`Q` to move vertically, and `Shift` to move faster.
+

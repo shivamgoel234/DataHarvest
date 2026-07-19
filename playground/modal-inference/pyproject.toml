@@ -1,7 +1,7 @@
 [project]
 name = "modal-inference"
 version = "0.1.0"
-description = "Modal inference wrappers for the hack48 playground video-analysis experiments."
+description = "Modal inference wrappers for the dataharvest playground video-analysis experiments."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -10,3 +10,4 @@ dependencies = [
 
 [tool.uv]
 python-preference = "only-system"
+
