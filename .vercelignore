@@ -1,0 +1,8 @@
+# Vercel ignores these directories (not needed for web deployment)
+backend/
+iosApp/
+playground/
+supabase/
+DataCollector.xcodeproj/
+docs/
+*.xcuserstate
