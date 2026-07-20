@@ -16,11 +16,15 @@ export default async function CollectorTasksPage() {
   if (!profile) redirect('/collector/onboard')
 
   // RLS filters tasks to only those matching this collector's capabilities
-  const { data: tasks } = await supabase
+  const { data: tasks, error: tasksError } = await supabase
     .from('tasks')
     .select('id, title, description, data_type, bounty_amount, quantity_needed, quantity_filled, deadline')
     .eq('status', 'open')
     .order('bounty_amount', { ascending: false })
+
+  if (tasksError) {
+    console.error('Tasks query failed:', tasksError.message, tasksError.code)
+  }
 
   return (
     <div>
@@ -31,7 +35,13 @@ export default async function CollectorTasksPage() {
         </p>
       </div>
 
-      {!tasks?.length ? (
+      {tasksError ? (
+        <div className="surface-panel py-20 text-center">
+          <div className="text-4xl mb-3">⚠️</div>
+          <p className="font-medium text-white mb-2">Could not load tasks</p>
+          <p className="text-sm text-[var(--foreground-secondary)]">Please refresh the page. If this continues, contact support.</p>
+        </div>
+      ) : !tasks?.length ? (
         <div className="surface-panel py-20 text-center">
           <div className="text-4xl mb-3">🔍</div>
           <p className="text-[var(--foreground-secondary)]">No matching tasks right now. Check back soon.</p>

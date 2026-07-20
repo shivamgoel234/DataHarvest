@@ -50,7 +50,7 @@ export default async function CollectorTaskPage({ params }: { params: Promise<{ 
     .single()
 
   const spotsLeft = task.quantity_needed - task.quantity_filled
-  const deepLink = `aperture://task/${id}`
+  const deepLink = `dataharvest://task/${id}`
   const requirements = ((task.required_capabilities as string[] | null) ?? []).filter(Boolean)
   const taskWithMedia = task as typeof task & {
     metadata?: { reference_assets?: ReferenceAsset[] }

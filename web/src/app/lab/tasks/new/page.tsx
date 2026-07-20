@@ -40,13 +40,17 @@ async function createTask(formData: FormData) {
     .single()
 
   if (error || !data) {
-    console.error(error)
-    return
+    console.error('Task creation failed:', error?.message, error?.code, error?.details)
+    // Redirect back to form with error flag so the user sees a visible error message
+    redirect('/lab/tasks/new?error=creation_failed')
   }
 
   redirect(`/lab/tasks/${data.id}`)
 }
 
-export default function NewTaskPage() {
-  return <CreateTaskForm action={createTask} />
+export default async function NewTaskPage(
+  { searchParams }: { searchParams: Promise<{ error?: string }> }
+) {
+  const { error } = await searchParams
+  return <CreateTaskForm action={createTask} creationError={error === 'creation_failed' ? 'Task creation failed. Please check your connection and try again.' : null} />
 }

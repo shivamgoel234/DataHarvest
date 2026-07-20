@@ -7,7 +7,7 @@ import { approveSubmission, rejectSubmission } from '@/app/actions/submissions'
 import { triggerToast } from '@/components/toast'
 
 export type AnalysisJobKind =
-  | 'gemini_eval'
+  | 'gpt_eval'
   | 'mediapipe_hands'
   | 'yolo_objects'
   | 'sam_segments'

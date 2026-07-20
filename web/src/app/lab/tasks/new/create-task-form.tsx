@@ -19,8 +19,10 @@ type PreviewAsset = {
 
 export default function CreateTaskForm({
   action,
+  creationError,
 }: {
   action: (formData: FormData) => void
+  creationError?: string | null
 }) {
   const uploadId = useId()
   const [title, setTitle] = useState('')
@@ -90,6 +92,12 @@ export default function CreateTaskForm({
           </p>
         </div>
       </div>
+
+      {creationError && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          ⚠️ {creationError}
+        </div>
+      )}
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1.55fr)_360px]">
         <form id="create-task-form" action={action} className="space-y-6">

@@ -29,12 +29,20 @@ async function submitQuestionnaire(formData: FormData) {
   const locationCity = formData.get('location_city') as string
 
   // Derive capabilities from answers — both arrays are capability values
-  await supabase.from('collector_profiles').upsert({
+  const { error: upsertError } = await supabase.from('collector_profiles').upsert({
     user_id: user.id,
     capabilities,
     location_city: locationCity,
     questionnaire_data: { capabilities, location_city: locationCity },
   })
+
+  if (upsertError) {
+    // Log full error so it appears in Vercel function logs for debugging
+    console.error('Onboard upsert failed:', upsertError.message, upsertError.code, upsertError.details)
+    // Do NOT redirect — stay on onboard page so user can retry
+    // The form will re-render with the same state
+    return
+  }
 
   redirect('/collector/tasks')
 }
