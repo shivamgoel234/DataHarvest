@@ -23,7 +23,11 @@ security definer set search_path = ''
 as $$
 begin
   insert into public.profiles (id, role, display_name)
-  values (new.id, 'collector', coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)));
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'role', 'collector'),
+    coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
+  );
   return new;
 end;
 $$;
@@ -36,6 +40,8 @@ create trigger on_auth_user_created
 create table if not exists public.collector_profiles (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   capabilities text[] not null default '{}',
+  location_city text,
+  questionnaire_data jsonb,
   created_at timestamptz not null default now()
 );
 alter table public.collector_profiles enable row level security;
