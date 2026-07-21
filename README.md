@@ -160,6 +160,17 @@ dataharvest/
 | **Video Search** | TwelveLabs API | Natural language video search |
 | **Deployment** | Vercel (web), Modal (backend) | Production hosting |
 
+## 🤖 How Codex & GPT-5.6 Accelerated Our Workflow
+
+Building a distributed, multi-modal pipeline that stitches together Next.js, Supabase, Serverless GPUs (Modal), and iOS Swift is notoriously complex. We leveraged **Codex and GPT-5.6** as our senior architectural co-pilots to rapidly accelerate development and navigate critical technical roadblocks.
+
+**Key Decisions & Implementation Highlights:**
+- **Rapid Infrastructure Debugging:** When we hit hardware constraints deploying our heavy SAM 3.1 and YOLOv26 pipelines to Modal on a free tier, Codex instantly analyzed the entire codebase, identified the `H100` GPU bottleneck, and dynamically rewrote our serverless classes to utilize `L4` and `T4` GPUs. This saved hours of documentation hunting and kept our cloud deployment moving.
+- **End-to-End Environment Orchestration:** We used GPT-5.6 to map out the complex web of API keys required across four different platforms (Supabase Edge Functions, Vercel, Modal Secrets, and TwelveLabs). It generated a flawless implementation plan that allowed us to link our edge functions and deploy the Next.js frontend in minutes rather than days.
+- **Semantic Code Understanding:** Instead of just writing boilerplate, Codex deeply understood the *intent* behind our architecture. It confidently guided the configuration of our Supabase backend and Edge Functions, ensuring our multi-sensor data flowed securely from the iPhone straight into our serverless GPU pipeline. 
+
+By having an AI agent that could read our entire project graph and safely execute terminal commands to test our deployments, we were able to focus entirely on the core product vision—solving the robotics data gap—while Codex handled the heavy lifting of DevOps, environment configuration, and microservice integration.
+
 ---
 
 ## 🚀 Getting Started
