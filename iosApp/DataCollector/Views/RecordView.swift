@@ -21,7 +21,11 @@ struct RecordView: View {
     @State private var review: ReviewClip?
     @State private var refUploading = false
     @State private var refError: String?
-    @State private var showDebug = true   // on-screen coaching debug readout
+    #if DEBUG
+    @State private var showDebug = true
+    #else
+    @State private var showDebug = false
+    #endif
 
     var body: some View {
         Group {

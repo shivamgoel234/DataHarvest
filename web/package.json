@@ -7,7 +7,7 @@
     "dev:next": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@sparkjsdev/spark": "^2.1.0",

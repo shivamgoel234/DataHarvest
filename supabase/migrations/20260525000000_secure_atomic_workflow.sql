@@ -1,5 +1,3 @@
--- Legacy SQL-editor entry point. Canonical source: migrations/20260525000000_secure_atomic_workflow.sql
-
 -- Repair deployed schemas and make submission review atomic and authorized.
 
 alter table public.recording_analysis_jobs

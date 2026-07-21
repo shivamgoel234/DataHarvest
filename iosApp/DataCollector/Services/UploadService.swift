@@ -133,9 +133,17 @@ enum UploadService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let responseBody = String(data: data, encoding: .utf8) ?? ""
         guard (200..<300).contains(status) else {
-            throw UploadError.server(step: "Finalize", status: status,
-                                     body: String(data: data, encoding: .utf8) ?? "")
+            throw UploadError.server(step: "Finalize", status: status, body: responseBody)
+        }
+
+        let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard result?["analysis_started"] as? Bool == true else {
+            let reason = result?["analysis_error"] as? String
+                ?? result?["error"] as? String
+                ?? "The analysis service did not accept the recording."
+            throw UploadError.server(step: "Start analysis", status: status, body: reason)
         }
     }
 

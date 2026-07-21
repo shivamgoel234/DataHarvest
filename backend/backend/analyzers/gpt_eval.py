@@ -8,7 +8,7 @@ from typing import Any
 from backend.contracts import GPTEvaluation
 
 
-DEFAULT_MODEL = "gpt-4o"
+DEFAULT_MODEL = "gemini-2.5-flash"
 
 
 def build_evaluation_prompt(task_description: str) -> str:
@@ -57,8 +57,8 @@ def evaluate_video_file(
     if not resolved_video.is_file():
         raise FileNotFoundError(f"video file does not exist: {resolved_video}")
 
-    active_model = model or os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
-    active_client = client or _make_openai_client()
+    active_model = model or os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL
+    active_client = client or _make_gemini_client()
     uploaded_file = active_client.files.upload(file=str(resolved_video))
 
     try:
@@ -75,7 +75,7 @@ def evaluate_video_file(
         )
         text = getattr(response, "text", None)
         if not text:
-            raise RuntimeError("ChatGPT returned an empty response")
+            raise RuntimeError("Gemini returned an empty response")
         return GPTEvaluation.model_validate_json(text)
     finally:
         if cleanup_uploaded:
@@ -96,11 +96,11 @@ def wait_for_uploaded_file(
         if state in {"", "ACTIVE"}:
             return current_file
         if state == "FAILED":
-            raise RuntimeError(f"ChatGPT file processing failed for {current_file.name}")
+            raise RuntimeError(f"Gemini file processing failed for {current_file.name}")
         if poll_interval_s > 0:
             time.sleep(poll_interval_s)
         current_file = client.files.get(name=current_file.name)
-    raise TimeoutError(f"Timed out waiting for ChatGPT file processing: {uploaded_file.name}")
+    raise TimeoutError(f"Timed out waiting for Gemini file processing: {uploaded_file.name}")
 
 
 def _state_name(uploaded_file: Any) -> str:
@@ -114,17 +114,23 @@ def _state_name(uploaded_file: Any) -> str:
     return str(raw_state).split(".")[-1].upper()
 
 
-def _make_openai_client() -> Any:
-    from openai import OpenAI
+def _make_gemini_client() -> Any:
+    from google import genai
 
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError("Set OPENAI_API_KEY in the environment.")
-    return OpenAI(api_key=api_key)
+        raise RuntimeError("Set GEMINI_API_KEY in the environment.")
+    return genai.Client(api_key=api_key)
 
 
 def _response_config() -> Any:
-    return {"temperature": 0, "response_format": {"type": "json_object"}}
+    from google.genai import types
+
+    return types.GenerateContentConfig(
+        temperature=0,
+        response_mime_type="application/json",
+        response_json_schema=response_schema(),
+    )
 
 
 def _delete_uploaded_file(client: Any, uploaded_file: Any) -> None:

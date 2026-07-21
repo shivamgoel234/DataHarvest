@@ -86,7 +86,7 @@ Web-scraped video can't provide what physical AI models actually need:
 - **Voice narration** — On-device WhisperKit transcription of collector commentary
 
 ### 🧠 AI Analysis Pipeline (Serverless GPU)
-- **ChatGPT Evaluation** — Automatic scoring (0-10) with success detection & reasoning
+- **Gemini Evaluation** — Automatic scoring (0-10) with success detection & reasoning
 - **YOLO v26 Object Detection** — Real-time object identification across all frames
 - **MediaPipe Hand Tracking** — 21-joint hand pose estimation for manipulation tasks
 - **SAM 3.1 Segmentation** — Concept-based video segmentation with text prompts
@@ -113,7 +113,7 @@ dataharvest/
 ├── backend/                      # 🤖 Modal Serverless Backend (Python)
 │   ├── modal_app.py              #    Main Modal app — all GPU functions
 │   ├── backend/
-│   │   ├── analyzers/gpt_eval.py #    ChatGPT video evaluation
+│   │   ├── analyzers/gpt_eval.py #    Gemini video evaluation
 │   │   ├── orchestrator.py       #    Pipeline coordination
 │   │   ├── contracts.py          #    Shared types & schemas
 │   │   ├── artifacts.py          #    Storage path management
@@ -150,7 +150,7 @@ dataharvest/
 | **Auth & DB** | Supabase (PostgreSQL + Auth + Storage) | User accounts, data storage, RLS |
 | **Edge Functions** | Supabase Edge Functions (Deno) | Submission processing, Modal dispatch |
 | **AI Backend** | Modal (Serverless GPU) | Auto-scaling GPU inference |
-| **AI — Scoring** | OpenAI ChatGPT (GPT-4o) | Video evaluation & quality scoring |
+| **AI — Scoring** | OpenAI Gemini (GPT-4o) | Video evaluation & quality scoring |
 | **AI — Detection** | Ultralytics YOLO v26 | Object detection & instance segmentation |
 | **AI — Hands** | Google MediaPipe | 21-joint hand pose estimation |
 | **AI — Segmentation** | Meta SAM 3.1 | Text-prompted video segmentation |
@@ -241,7 +241,7 @@ Tap "Upload" ─────────────▶   └── metadata.jso
                                                                 │
                               recording_analysis_jobs            │
                               ┌────────────────────┐            ▼
-                              │ gpt_eval: running  │◀─── ChatGPT scoring
+                              │ gpt_eval: running  │◀─── Gemini scoring
                               │ yolo: running      │◀─── YOLO detection
                               │ mediapipe: running │◀─── Hand tracking
                               │ sam: running       │◀─── SAM segmentation
@@ -250,7 +250,7 @@ Tap "Upload" ─────────────▶   └── metadata.jso
                                        │
                                        ▼
                               recordings/{id}/analysis/
-                               ├── gpt-eval.json
+                               ├── gemini-eval.json
                                ├── yolo-detections.json
                                ├── mediapipe-hands.json
                                ├── sam-segments.json
@@ -286,7 +286,7 @@ open DataCollector.xcodeproj
 
 Every uploaded recording passes through **5 parallel AI analyzers** on serverless GPUs:
 
-### 1. 🧠 ChatGPT Evaluation (`gpt_eval`)
+### 1. 🧠 Gemini Evaluation (`gpt_eval`)
 Watches the full video and returns structured scoring:
 ```json
 {
@@ -333,7 +333,7 @@ For recordings with LiDAR depth data, trains a 3D Gaussian splat via NerfStudio 
 | `SUPABASE_URL` | ✅ | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key |
 | `SUPABASE_ANON_KEY` | ✅ | Supabase anonymous key |
-| `OPENAI_API_KEY` | ✅ | OpenAI API key for ChatGPT eval |
+| `GEMINI_API_KEY` | ✅ | Google API key for Gemini evaluation |
 | `MODAL_ANALYSIS_SECRET` | ✅ | Shared secret for edge function ↔ Modal auth |
 
 ---

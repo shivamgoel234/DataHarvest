@@ -67,10 +67,15 @@ def apply_gpt_result(
     )
 
 
-def final_recording_status(statuses: list[str]) -> str:
+def final_recording_status(
+    statuses: list[str], *, critical_statuses: list[str] | None = None
+) -> str:
     if any(status in {"pending", "running"} for status in statuses):
         return "analyzing"
-    if any(status == "failed" for status in statuses):
+    if critical_statuses is not None and not critical_statuses:
+        return "analysis_failed"
+    failures = critical_statuses if critical_statuses is not None else statuses
+    if any(status == "failed" for status in failures):
         return "analysis_failed"
     return "analyzed"
 
@@ -201,12 +206,15 @@ def gaussian_splat_preflight(recording: RecordingRecord) -> bool:
 def update_final_status(api: SupabaseApi, recording_id: str) -> str:
     response = api.client.get(
         f"{api.config.url}/rest/v1/recording_analysis_jobs"
-        f"?recording_id=eq.{recording_id}&select=status",
+        f"?recording_id=eq.{recording_id}&select=kind,status",
         headers=api.rest_headers(),
     )
     rows = api._json(response)
     statuses = [row["status"] for row in rows]
-    status = final_recording_status(statuses)
+    critical_statuses = [
+        row["status"] for row in rows if row.get("kind") == "gpt_eval"
+    ]
+    status = final_recording_status(statuses, critical_statuses=critical_statuses)
     api.patch_rows("recordings", f"id=eq.{recording_id}", {"status": status})
     return status
 

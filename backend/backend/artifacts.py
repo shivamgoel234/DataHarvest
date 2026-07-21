@@ -7,7 +7,7 @@ from backend.contracts import AnalysisKind
 
 
 ANALYSIS_FILENAMES: dict[AnalysisKind, str] = {
-    "gpt_eval": "gpt-eval.json",
+    "gpt_eval": "gemini-eval.json",
     "mediapipe_hands": "mediapipe-hands.json",
     "yolo_objects": "yolo-detections.json",
     "sam_segments": "sam-segments.json",

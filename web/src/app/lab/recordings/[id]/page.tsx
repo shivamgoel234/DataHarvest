@@ -4,7 +4,7 @@ import Link from 'next/link'
 import ArtifactPreview from './artifact-preview'
 
 type AnalysisJobKind =
-  | 'gemini_eval'
+  | 'gpt_eval'
   | 'mediapipe_hands'
   | 'yolo_objects'
   | 'sam_segments'
@@ -32,7 +32,7 @@ type DetectedObject = {
 }
 
 const JOB_KIND_LABEL: Record<AnalysisJobKind, string> = {
-  gemini_eval: 'Gemini scoring',
+  gpt_eval: 'Gemini scoring',
   mediapipe_hands: 'MediaPipe hands',
   yolo_objects: 'YOLO objects',
   sam_segments: 'SAM segments',
@@ -40,7 +40,7 @@ const JOB_KIND_LABEL: Record<AnalysisJobKind, string> = {
 }
 
 const JOB_KIND_ORDER: AnalysisJobKind[] = [
-  'gemini_eval',
+  'gpt_eval',
   'mediapipe_hands',
   'yolo_objects',
   'sam_segments',

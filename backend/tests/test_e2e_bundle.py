@@ -88,12 +88,12 @@ def test_poll_score_fails_when_scoring_done_without_fields():
                 "kind": "gpt_eval",
                 "status": "failed",
                 "artifact_path": "rec/analysis/gemini-eval.json",
-                "error": "ChatGPT quota exceeded",
+                "error": "Gemini quota exceeded",
             }
         ],
     )
 
-    with pytest.raises(RuntimeError, match="ChatGPT quota exceeded"):
+    with pytest.raises(RuntimeError, match="Gemini quota exceeded"):
         poll_score(api, "rec", timeout_s=10)
 
 

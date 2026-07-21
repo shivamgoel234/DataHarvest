@@ -165,7 +165,11 @@ export default function SubmissionsLive({ taskId, initialSubmissions }: Props) {
 
   function handleApprove(submissionId: string) {
     startTransition(async () => {
-      await approveSubmission(submissionId, taskId)
+      const result = await approveSubmission(submissionId)
+      if (result.error) {
+        triggerToast(result.error)
+        return
+      }
       setSubmissions(prev =>
         prev.map(s => s.id === submissionId ? { ...s, status: 'approved' } : s)
       )
@@ -174,7 +178,11 @@ export default function SubmissionsLive({ taskId, initialSubmissions }: Props) {
 
   function handleReject(submissionId: string) {
     startTransition(async () => {
-      await rejectSubmission(submissionId, taskId)
+      const result = await rejectSubmission(submissionId)
+      if (result.error) {
+        triggerToast(result.error)
+        return
+      }
       setSubmissions(prev =>
         prev.map(s => s.id === submissionId ? { ...s, status: 'rejected' } : s)
       )
@@ -225,19 +233,6 @@ export default function SubmissionsLive({ taskId, initialSubmissions }: Props) {
   )
 }
 
-const RECORDING_STATUS_STYLES: Record<RecordingAnalysis['status'], string> = {
-  uploaded: 'bg-[rgba(115,120,131,0.18)] text-[#d3d7de]',
-  analyzing: 'bg-[rgba(216,163,71,0.16)] text-[#f0cb7c]',
-  analyzed: 'bg-[rgba(47,158,68,0.16)] text-[#99ddaa]',
-  analysis_failed: 'bg-[rgba(210,100,100,0.16)] text-[#f3a8a8]',
-}
-
-const JOB_STATUS_STYLES: Record<AnalysisJobStatus, string> = {
-  pending: 'border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--foreground-secondary)]',
-  running: 'bg-[rgba(216,163,71,0.16)] text-[#f0cb7c]',
-  succeeded: 'bg-[rgba(47,158,68,0.16)] text-[#99ddaa]',
-  failed: 'bg-[rgba(210,100,100,0.16)] text-[#f3a8a8]',
-}
 
 function SubmissionCard({
   submission,

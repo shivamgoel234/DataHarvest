@@ -1,6 +1,6 @@
 from backend.contracts import AnalysisRequest, GPTEvaluation
 from backend.orchestrator import (
-    apply_gemini_result,
+    apply_gpt_result,
     final_recording_status,
     prune_resource_intensive_jobs,
 )
@@ -20,7 +20,7 @@ class FakeSupabase:
         return []
 
 
-def test_apply_gemini_result_flips_scoring_false():
+def test_apply_gpt_result_flips_scoring_false():
     fake = FakeSupabase()
     result = GPTEvaluation(
         summary="A hand picks up a cup.",
@@ -30,7 +30,7 @@ def test_apply_gemini_result_flips_scoring_false():
         score_reasoning="The action succeeds with slight hesitation.",
     )
 
-    apply_gemini_result(fake, "rec-1", result)
+    apply_gpt_result(fake, "rec-1", result)
 
     assert fake.patches == [
         (
@@ -53,6 +53,16 @@ def test_final_recording_status_prefers_in_progress_before_failed():
     assert final_recording_status(["succeeded", "failed"]) == "analysis_failed"
     assert final_recording_status(["succeeded", "running"]) == "analyzing"
     assert final_recording_status(["failed", "pending"]) == "analyzing"
+
+
+def test_missing_scoring_job_fails_recording():
+    assert final_recording_status(["succeeded"], critical_statuses=[]) == "analysis_failed"
+
+
+def test_optional_failure_does_not_fail_recording_when_scoring_succeeds():
+    assert final_recording_status(
+        ["succeeded", "failed"], critical_statuses=["succeeded"]
+    ) == "analyzed"
 
 
 def test_prune_resource_intensive_jobs_keeps_scoring_job():

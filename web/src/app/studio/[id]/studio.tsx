@@ -16,7 +16,7 @@ const SceneView = dynamic(() => import('./scene-view'), { ssr: false })
  * ═════════════════════════════════════════════════════════════════════ */
 
 export type AnalysisJobKind =
-  | 'gemini_eval'
+  | 'gpt_eval'
   | 'mediapipe_hands'
   | 'yolo_objects'
   | 'sam_segments'
@@ -226,7 +226,7 @@ const INITIAL_LAYERS: LayerState = {
 }
 
 const JOB_LABEL: Record<AnalysisJobKind, string> = {
-  gemini_eval: 'Gemini scoring',
+  gpt_eval: 'Gemini scoring',
   mediapipe_hands: 'MediaPipe hands',
   yolo_objects: 'YOLOv26 detection',
   sam_segments: 'SAM 3.1 masks',
@@ -2100,7 +2100,7 @@ function TaskPanel({ data }: { data: StudioData }) {
 }
 
 function JobsPanel({ data }: { data: StudioData }) {
-  const ordered: AnalysisJobKind[] = ['gemini_eval', 'mediapipe_hands', 'yolo_objects', 'sam_segments', 'temporal_actions']
+  const ordered: AnalysisJobKind[] = ['gpt_eval', 'mediapipe_hands', 'yolo_objects', 'sam_segments', 'temporal_actions']
   return (
     <div className="panel">
       <section className="panelblock">

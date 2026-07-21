@@ -7,7 +7,7 @@ alter table public.recording_analysis_jobs
 alter table public.recording_analysis_jobs
   add constraint recording_analysis_jobs_kind_check check (
     kind in (
-      'gemini_eval',
+      'gpt_eval',
       'mediapipe_hands',
       'yolo_objects',
       'sam_segments',

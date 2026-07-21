@@ -98,11 +98,13 @@ def test_prompt_includes_task_and_scoring_contract() -> None:
     assert "0 to 10" in prompt
 
 
-def test_evaluate_video_uploads_sample_video_and_returns_structured_result() -> None:
+def test_evaluate_video_uploads_sample_video_and_returns_structured_result(tmp_path: Path) -> None:
+    sample_video = tmp_path / "sample.mp4"
+    sample_video.write_bytes(b"fixture-video")
     client = FakeClient()
 
     result = evaluate_video(
-        video_path=SAMPLE_VIDEO,
+        video_path=sample_video,
         task_description="Move the can next to the noodles.",
         client=client,
         model=DEFAULT_MODEL,
@@ -111,7 +113,7 @@ def test_evaluate_video_uploads_sample_video_and_returns_structured_result() -> 
 
     assert result.task_succeeded is True
     assert result.trajectory_score == 8
-    assert client.files.uploaded_path == str(SAMPLE_VIDEO)
+    assert client.files.uploaded_path == str(sample_video.resolve())
     assert client.files.get_calls == 1
     assert client.files.deleted_name == "files/sample-video"
     assert client.models.request is not None

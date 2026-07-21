@@ -180,6 +180,17 @@ def resource_intensive_analysis_enabled() -> bool:
     }
 
 
+def production_max_frames() -> int:
+    raw = os.environ.get("DATAHARVEST_MAX_ANALYSIS_FRAMES", "600")
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise RuntimeError("DATAHARVEST_MAX_ANALYSIS_FRAMES must be an integer") from exc
+    if not 1 <= value <= 3600:
+        raise RuntimeError("DATAHARVEST_MAX_ANALYSIS_FRAMES must be between 1 and 3600")
+    return value
+
+
 def _cuda_device() -> int | str:
     import torch
 
@@ -1130,7 +1141,7 @@ def process_recording(payload: dict) -> dict[str, object]:
                             video_bytes,
                             suffix=".mp4",
                             task="detect",
-                            max_frames=None,
+                            max_frames=production_max_frames(),
                         )
                     )
                 ] = "yolo_objects"
@@ -1140,7 +1151,7 @@ def process_recording(payload: dict) -> dict[str, object]:
                             video_bytes,
                             suffix=".mp4",
                             target_fps=10.0,
-                            max_frames=None,
+                            max_frames=production_max_frames(),
                         )
                     )
                 ] = "mediapipe_hands"
@@ -1150,7 +1161,7 @@ def process_recording(payload: dict) -> dict[str, object]:
                             video_bytes,
                             suffix=".mp4",
                             text_prompts=prompts,
-                            max_frames=None,
+                            max_frames=production_max_frames(),
                         )
                     )
                 ] = "sam_segments"
@@ -1259,6 +1270,11 @@ def process_recording(payload: dict) -> dict[str, object]:
     finally:
         api.close()
 
+
+@app.function(image=orchestrator_image, timeout=30)
+@modal.fastapi_endpoint(method="GET")
+def health() -> dict[str, object]:
+    return {"ok": True, "service": APP_NAME}
 
 @app.function(
     image=orchestrator_image,

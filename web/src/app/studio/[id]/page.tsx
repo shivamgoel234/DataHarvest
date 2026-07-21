@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Studio, { type StudioData, type SiblingRecording, type AnalysisJobPayload, type SplatScenePayload } from './studio'
 
 type AnalysisJobKind =
-  | 'gemini_eval'
+  | 'gpt_eval'
   | 'mediapipe_hands'
   | 'yolo_objects'
   | 'sam_segments'

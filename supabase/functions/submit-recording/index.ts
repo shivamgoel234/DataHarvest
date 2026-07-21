@@ -7,7 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 const scoringAnalysisKinds = ["gpt_eval"] as const;
@@ -25,14 +25,12 @@ const allAnalysisKinds = [
 type AnalysisKind = typeof allAnalysisKinds[number];
 
 const analysisFilenames: Record<AnalysisKind, string> = {
-  gpt_eval: "gpt-eval.json",
+  gpt_eval: "gemini-eval.json",
   mediapipe_hands: "mediapipe-hands.json",
   yolo_objects: "yolo-detections.json",
   sam_segments: "sam-segments.json",
   temporal_actions: "temporal-actions.json",
 };
-
-const terminalRecordingStatuses = new Set(["analyzed", "analysis_failed"]);
 
 function resourceIntensiveAnalysisEnabled() {
   return ["1", "true", "yes", "on"].includes(
@@ -40,13 +38,22 @@ function resourceIntensiveAnalysisEnabled() {
   );
 }
 
+function hourlySubmissionLimit() {
+  const configured = Number(Deno.env.get("DATAHARVEST_MAX_SUBMISSIONS_PER_HOUR") ?? "20");
+  return Number.isInteger(configured) && configured > 0 ? configured : 20;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method === "GET") return json({ ok: true, service: "submit-recording" }, 200);
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !anonKey || !serviceKey) {
+    return json({ error: "Supabase environment is not configured" }, 500);
+  }
   const authHeader = req.headers.get("Authorization") ?? "";
 
   // 1) Identify the caller from their JWT.
@@ -64,11 +71,17 @@ Deno.serve(async (req) => {
     return json({ error: "Expected JSON body" }, 400);
   }
 
-  const recordingId = String(body.recording_id ?? crypto.randomUUID());
-  const taskId = body.task_id ? String(body.task_id) : null;
-  if (!taskId) return json({ error: "task_id is required" }, 400); // submissions.task_id is NOT NULL
+  const recordingId = String(body.recording_id ?? crypto.randomUUID()).toLowerCase();
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  if (!uuidPattern.test(recordingId)) return json({ error: "recording_id must be a UUID" }, 400);
 
-  const storagePath = body.storage_path ? String(body.storage_path) : `${recordingId}/`;
+  const taskId = body.task_id ? String(body.task_id).toLowerCase() : null;
+  if (!taskId || !uuidPattern.test(taskId)) return json({ error: "task_id must be a UUID" }, 400);
+
+  const storagePath = `${recordingId}/`;
+  if (body.storage_path && String(body.storage_path) !== storagePath) {
+    return json({ error: "storage_path must match recording_id" }, 400);
+  }
   const streams = Array.isArray(body.streams) ? body.streams : [];
   const numOrNull = (v: unknown) => (v === undefined || v === null ? null : Number(v));
   const strOrNull = (v: unknown) => (v === undefined || v === null ? null : String(v));
@@ -78,16 +91,44 @@ Deno.serve(async (req) => {
 
   const { data: existingRecording, error: existingRecordingErr } = await admin
     .from("recordings")
-    .select("id,is_scoring,status")
+    .select("id,collector_id,is_scoring,status")
     .eq("id", recordingId)
     .maybeSingle();
   if (existingRecordingErr) return json({ error: `recordings lookup: ${existingRecordingErr.message}` }, 500);
+  if (existingRecording && existingRecording.collector_id !== user.id) {
+    return json({ error: "recording_id belongs to another collector" }, 409);
+  }
+
+  if (!existingRecording) {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count, error: rateErr } = await admin
+      .from("recordings")
+      .select("id", { count: "exact", head: true })
+      .eq("collector_id", user.id)
+      .gte("created_at", oneHourAgo);
+    if (rateErr) return json({ error: `rate limit lookup: ${rateErr.message}` }, 500);
+    if ((count ?? 0) >= hourlySubmissionLimit()) {
+      return json({ error: "Hourly recording submission limit reached" }, 429);
+    }
+  }
+
+  const { data: task, error: taskErr } = await admin
+    .from("tasks")
+    .select("id,status,deadline,quantity_needed,quantity_filled")
+    .eq("id", taskId)
+    .maybeSingle();
+  if (taskErr) return json({ error: `tasks lookup: ${taskErr.message}` }, 500);
+  if (!task) return json({ error: "Task not found" }, 404);
+  if (task.status !== "open" || task.quantity_filled >= task.quantity_needed ||
+      (task.deadline && new Date(task.deadline) <= new Date())) {
+    return json({ error: "Task is no longer accepting submissions" }, 409);
+  }
 
   const existingRecordingStatus = typeof existingRecording?.status === "string" ? existingRecording.status : null;
-  const recordingStatus = existingRecordingStatus && terminalRecordingStatuses.has(existingRecordingStatus)
-    ? existingRecordingStatus
-    : "analyzing";
-  const isScoring = existingRecording?.is_scoring === false ? false : true;
+  const recordingStatus = existingRecordingStatus === "analyzed" ? "analyzed" : "analyzing";
+  const isScoring = existingRecordingStatus === "analyzed"
+    ? (existingRecording?.is_scoring ?? false)
+    : true;
 
   const { error: dbErr } = await admin.from("recordings").upsert({
     id: recordingId,
@@ -139,8 +180,22 @@ Deno.serve(async (req) => {
       })
       .select("id")
       .single();
-    if (subErr) return json({ error: `submissions: ${subErr.message}` }, 500);
-    submissionId = subData?.id ?? null;
+    if (subErr && subErr.code !== "23505") {
+      return json({ error: `submissions: ${subErr.message}` }, 500);
+    }
+    if (subData?.id) {
+      submissionId = subData.id;
+    } else {
+      const { data: concurrentSubmission, error: concurrentErr } = await admin
+        .from("submissions")
+        .select("id")
+        .eq("task_id", taskId)
+        .eq("collector_id", user.id)
+        .eq("storage_path", storagePath)
+        .single();
+      if (concurrentErr) return json({ error: `submissions retry lookup: ${concurrentErr.message}` }, 500);
+      submissionId = concurrentSubmission.id;
+    }
   }
 
   const storagePathWithoutTrailingSlash = storagePath.replace(/\/+$/, "") || recordingId;
@@ -219,12 +274,51 @@ Deno.serve(async (req) => {
     .upsert(jobRows, { onConflict: "recording_id,kind", ignoreDuplicates: true });
   if (jobsErr) return json({ error: `recording_analysis_jobs: ${jobsErr.message}` }, 500);
 
+  const { data: claimedJobs, error: claimErr } = await admin
+    .from("recording_analysis_jobs")
+    .update({ status: "running", error: null, started_at: new Date().toISOString(), finished_at: null })
+    .eq("recording_id", recordingId)
+    .eq("kind", "gpt_eval")
+    .in("status", ["pending", "failed"])
+    .select("id");
+  if (claimErr) return json({ error: `analysis claim: ${claimErr.message}` }, 500);
+
+  if (!claimedJobs?.length) {
+    return json({
+      ok: true,
+      recording_id: recordingId,
+      submission_id: submissionId,
+      streams,
+      analysis_kinds: analysisKinds,
+      resource_intensive_analysis_enabled: runResourceIntensiveAnalysis,
+      analysis_started: true,
+      analysis_already_started: true,
+    }, 200);
+  }
+
   const modalResult = await startModalAnalysis({
     recording_id: recordingId,
     task_id: taskId,
     submission_id: submissionId,
     storage_path: storagePath,
   });
+
+  if (!modalResult.ok) {
+    await admin.from("recording_analysis_jobs")
+      .update({ status: "pending", error: modalResult.error, started_at: null })
+      .eq("recording_id", recordingId)
+      .eq("kind", "gpt_eval")
+      .eq("status", "running");
+    await admin.from("recordings")
+      .update({ status: "uploaded", is_scoring: true })
+      .eq("id", recordingId);
+    return json({
+      error: modalResult.error,
+      recording_id: recordingId,
+      submission_id: submissionId,
+      analysis_started: false,
+    }, 502);
+  }
 
   return json({
     ok: true,
@@ -233,8 +327,7 @@ Deno.serve(async (req) => {
     streams,
     analysis_kinds: analysisKinds,
     resource_intensive_analysis_enabled: runResourceIntensiveAnalysis,
-    analysis_started: modalResult.ok,
-    analysis_error: modalResult.ok ? null : modalResult.error,
+    analysis_started: true,
   }, 200);
 });
 

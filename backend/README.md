@@ -17,10 +17,11 @@ Required local or Modal secret values:
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ANON_KEY`
-- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
 - `MODAL_ANALYSIS_SECRET`
-- `OPENAI_MODEL` (optional; defaults to `gpt-4o`)
+- `GEMINI_MODEL` (optional; defaults to `gemini-2.5-flash`)
 - `DATAHARVEST_ENABLE_RESOURCE_INTENSIVE_AI_TASKS` (optional; defaults off. Set to `1` for demo runs to enable YOLO, MediaPipe, SAM, temporal actions, and Gaussian splats.)
+- `DATAHARVEST_MAX_ANALYSIS_FRAMES` (optional; defaults to `600`, allowed range `1` to `3600`.)
 
 Deploy:
 
@@ -33,6 +34,7 @@ The Supabase `submit-recording` function needs matching Edge Function secrets:
 
 - `MODAL_ANALYSIS_URL`: the Modal endpoint URL
 - `MODAL_ANALYSIS_SECRET`: same value as the Modal secret
+- `DATAHARVEST_MAX_SUBMISSIONS_PER_HOUR` (optional; defaults to `20` per collector.)
 
 ## E2E Upload
 
@@ -47,7 +49,7 @@ uv run --python 3.12 python -m backend.tools.e2e_upload_bundle \
   --wait score
 ```
 
-`--wait score` returns as soon as GPT scoring has populated
+`--wait score` returns as soon as Gemini scoring has populated
 `recordings.summary`, `recordings.success`, `recordings.success_reasoning`,
 `recordings.score`, `recordings.score_reasoning`, and flips
 `recordings.is_scoring` to `false`.
@@ -63,7 +65,7 @@ uv run --python 3.12 python -m backend.tools.e2e_upload_bundle \
 Heavy outputs are stored in the private `recordings` bucket under:
 
 ```text
-{recording_id}/analysis/gpt-eval.json
+{recording_id}/analysis/gemini-eval.json
 {recording_id}/analysis/mediapipe-hands.json
 {recording_id}/analysis/yolo-detections.json
 {recording_id}/analysis/sam-segments.json
