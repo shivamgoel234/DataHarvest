@@ -446,7 +446,7 @@ class Yolo26:
 
 @app.cls(
     image=sam_image,
-    gpu=["H100", "A100-80GB", "L40S"],
+    gpu=["L4", "T4", "A10G"],
     volumes={MODEL_ROOT: model_volume},
     timeout=20 * 60,
     scaledown_window=60,
